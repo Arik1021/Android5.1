@@ -10,51 +10,56 @@ import com.example.android51.R
 import com.example.android51.databinding.ItemNumberBinding
 import com.example.android51.domain.Card
 import com.example.android51.presenattion.presenter.EmojiGame
-class EmojiAdapter :RecyclerView.Adapter<EmojiAdapter.ViewHolder>() {
 
+
+class EmojiAdapter : RecyclerView.Adapter<EmojiAdapter.EmojiViewHolder>() {
     private val emojiGame = EmojiGame()
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-
-        private val ui = ItemNumberBinding.bind(itemView)
-        fun onBind(card: Card<String>) {
-
-            if (card.isMatched) onUiUpdate(card, true)
-            else onUiUpdate(card, card.isFacedUp)
-            if (!card.isMatched)
-                ui.itemFrame.setOnClickListener {
-                    onUiUpdate(card, !card.isFacedUp)
-
-                    emojiGame.onCardsClick(card)
-                    Handler(Looper.getMainLooper()).postDelayed({}, 1000)
-                }
-        }
-
-        private fun onUiUpdate(card: Card<String>, isFacedUp: Boolean) {
-
-            ui.itemTv.text = if (isFacedUp) card.content
-            else ""
-            ui.itemFrame.isPressed = isFacedUp
-
-
-
-
-        }
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) : ViewHolder{
-        return ViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.item_number, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EmojiViewHolder {
+        return EmojiViewHolder(
+            ItemNumberBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
         )
     }
-    override fun onBindViewHolder(holder: EmojiAdapter.ViewHolder, position: Int) {
-        holder.onBind(emojiGame.getCards()[position])
+
+    override fun onBindViewHolder(holder: EmojiViewHolder, position: Int) {
+        holder.bind(emojiGame.emojiCard()[position])
     }
 
-    override fun getItemCount() = emojiGame.getCards().size
+    override fun getItemCount() = emojiGame.emojiCard().size
+
+    inner class EmojiViewHolder(private var binding: ItemNumberBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(cardModel: Card<String>) {
+            if (cardModel.isMatched) {
+                onUiUpdate(cardModel, true)
+            } else {
+                onUiUpdate(cardModel, cardModel.isFacedUp)
+            }
 
 
+            if (!cardModel.isMatched) {
+                binding.itemFrame.setOnClickListener {
+                    onUiUpdate(cardModel, !cardModel.isFacedUp)
+                    emojiGame.emojiCardClick(cardModel)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        notifyDataSetChanged()
+                    }, 1000)
+                }
+            }
+        }
 
+        private fun onUiUpdate(cardModel: Card<String>, isFaced: Boolean) {
+            if (isFaced) {
+                binding.itemTv.text = cardModel.content.toString()
+            } else {
+                binding.itemTv.text = ""
+            }
+            binding.itemFrame.isPressed = isFaced
+        }
+    }
 }
 
